@@ -47,5 +47,5 @@ module.exports = {
     config.resolve.alias['@images'] = path.join(__dirname, 'images');
 
     return config;
-  }
+  },
 };

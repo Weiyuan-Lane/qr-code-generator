@@ -1,11 +1,22 @@
 import React, { useState } from 'react';
 import Head from 'next/head'
 import QRCode from 'qrcode'
-import { Box, TextField, Button, Grid, Divider, Chip } from '@mui/material';
+import { Box, TextField, Button, Grid, Divider, Chip, Input } from '@mui/material';
+import ImageIcon from '@mui/icons-material/Image';
+
+let QrCodeWithLogo;
+if (global.window) {
+  QrCodeWithLogo = require('qrcode-with-logos').default;
+}
+
+const FILE_DOWNLOAD_NAME = 'qrcode.jpg';
+const CANVAS_HOLDER = 'logoQrCanvas';
+const LOGO_IMAGE_INPUT_ID = 'contained-button-file';
 
 export default function Home() {
   const [text, setText] = useState('');
   const [isTextEmptyError, setIsTextEmptyError] = useState(false);
+  const [logoImageSrc, setLogoImageSrc] = useState('');
   const [optsData, setOptsData] = useState({
     errorCorrectionLevel: 'H',
     type: 'image/jpeg',
@@ -22,20 +33,50 @@ export default function Home() {
     if (text) {
       setIsTextEmptyError(false);
 
-      const dataUrl = await QRCode.toDataURL(text, optsData);
+      let dataUrl;
+      if (logoImageSrc) {
+        dataUrl = await new QrCodeWithLogo({
+          canvas: document.getElementById(CANVAS_HOLDER),
+          content: text,
+          width: 1000,
+          download: false,
+          logo: {
+            src: logoImageSrc,
+          }
+        }).getCanvas().then(canvas => {
+          return canvas.toDataURL();
+        });
+
+      } else {
+        dataUrl = await QRCode.toDataURL(text, optsData);
+      }
+
       setDataUrl(dataUrl);
     } else {
       setIsTextEmptyError(true);
     }
   }
 
+  function clickSetLogo(event) {
+    if (event && event.target) {
+      console.log(event.target, URL.createObjectURL(event.target.files[0]))
+      setLogoImageSrc(URL.createObjectURL(event.target.files[0]));
+    }
+  }
+  function clickClearLogo(event) {
+    if (event && event.target) {
+      setLogoImageSrc('');
+      document.getElementById(LOGO_IMAGE_INPUT_ID).value = null;
+    }
+  }
+
   return (
     <div className="container">
       <Head>
-        <title>Trustable + Frontend-only QR Code Generator</title>
+        <title>Frontend-only QR Code Generator</title>
         <link rel="icon" href="/favicon.ico" />
         <meta name="viewport" content="initial-scale=1.0, width=device-width" />
-        <meta property="og:title" content="Trustable + Frontend-only QR Code Generator" key="title" />
+        <meta property="og:title" content="Frontend-only QR Code Generator" key="title" />
         <meta property="og:url" content="https://weiyuan-lane.github.io/qr-code-generator" />
         <meta property="og:description" content="Generate QR codes for yourself, without worries of being tracked." />
         <meta property="og:type" content="website" />
@@ -78,6 +119,38 @@ export default function Home() {
               />
             </Grid>
             <Grid item xs={12}>
+              <label htmlFor={LOGO_IMAGE_INPUT_ID}>
+                <Input accept="image/*" id={LOGO_IMAGE_INPUT_ID} type="file" style={{ display: 'none' }} onChange={clickSetLogo} />
+                <Button 
+                  fullWidth
+                  variant="contained" 
+                  component="span"
+                  startIcon={<ImageIcon />}>
+                  (Optional) Upload Logo
+                </Button>
+              </label>
+              {logoImageSrc != ''
+                ? <div style={{ textAlign: 'center' }}>
+                    <img 
+                      src={logoImageSrc}
+                      style={{ paddingTop: '10px' }}/>
+                    <Button 
+                      fullWidth
+                      variant="outlined" 
+                      color="error"
+                      component="span"
+                      onClick={clickClearLogo}>
+                      Remove Logo
+                    </Button>
+                  </div>
+                : ''
+              }
+            </Grid>
+
+            <Grid item xs={12}>
+              <Divider></Divider>
+            </Grid>
+            <Grid item xs={12}>
               <Button
                 fullWidth
                 variant="outlined"
@@ -90,24 +163,23 @@ export default function Home() {
             {dataUrl !== ''
               ? <Grid item xs={12}>
                   <Divider
-                    style={{ paddingTop: '30px', paddingBottom: '30px' }}>
+                    style={{ paddingTop: '10px', paddingBottom: '30px' }}>
                     <Chip label="Result" />
                   </Divider>
                   <div style={{ textAlign: 'center' }}>
-                    <img 
-                      id="canvas" 
+                    <img
                       src={dataUrl}
-                      style={{ paddingTop: '10px' }}/>
+                      style={{ paddingTop: '10px', maxWidth: '100%' }}/>
                     <Button 
                       fullWidth
                       color="secondary"
-                      download="qrcode.jpg" 
+                      download={FILE_DOWNLOAD_NAME}
                       href={dataUrl}>
                       Download JPEG file
                     </Button>
                   </div>
                 </Grid>
-              : <div></div>
+              : ''
             }
 
             <Grid item xs={12}>
@@ -129,6 +201,8 @@ export default function Home() {
             </Grid>
           </Grid>
         </Box>
+
+        <canvas id={CANVAS_HOLDER} style={{ display: 'none' }}></canvas>
       </main>
     </div>
   )
