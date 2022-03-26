@@ -86,7 +86,7 @@ export default function Home() {
         <meta property="og:description" content="Generate QR codes for yourself, without worries of being tracked." />
         <meta property="og:type" content="website" />
         <meta property="og:locale" content="en_US" />
-        <meta property="og:image" content="/shareable-image.jpeg" />
+        <meta property="og:image" content="/qr-code-generator/shareable-image.jpeg" />
 
         <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"/>
       </Head>
