@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import Head from 'next/head'
 import QRCode from 'qrcode'
-import { Box, TextField, Button, Grid, Divider, Chip, Input } from '@mui/material';
+import { Box, TextField, Button, Grid, Divider, Chip, Input, FormControl, InputLabel } from '@mui/material';
 import ImageIcon from '@mui/icons-material/Image';
+import { CompactPicker } from 'react-color';
 
 let QrCodeWithLogo;
 if (global.window) {
@@ -15,18 +16,10 @@ const LOGO_IMAGE_INPUT_ID = 'contained-button-file';
 
 export default function Home() {
   const [text, setText] = useState('');
+  const [darkColor, setDarkColor] = useState('#000000');
+  const [lightColor, setLightColor] = useState('#FFFFFF');
   const [isTextEmptyError, setIsTextEmptyError] = useState(false);
   const [logoImageSrc, setLogoImageSrc] = useState('');
-  const [optsData, setOptsData] = useState({
-    errorCorrectionLevel: 'H',
-    type: 'image/jpeg',
-    quality: 1,
-    margin: 1,
-    color: {
-      dark:"#000000FF",
-      light:"#FFFFFFFF"
-    }
-  })
   const [dataUrl, setDataUrl] = useState('');
 
   async function submit() {
@@ -34,10 +27,22 @@ export default function Home() {
       setIsTextEmptyError(false);
 
       let dataUrl;
+      const optsData = {
+        errorCorrectionLevel: 'H',
+        type: 'image/jpeg',
+        quality: 1,
+        margin: 1,
+        color: {
+          dark: darkColor,
+          light: lightColor
+        }
+      };
+
       if (logoImageSrc) {
         dataUrl = await new QrCodeWithLogo({
           canvas: document.getElementById(CANVAS_HOLDER),
           content: text,
+          nodeQrCodeOptions: optsData,
           width: 1000,
           download: false,
           logo: {
@@ -59,10 +64,10 @@ export default function Home() {
 
   function clickSetLogo(event) {
     if (event && event.target) {
-      console.log(event.target, URL.createObjectURL(event.target.files[0]))
       setLogoImageSrc(URL.createObjectURL(event.target.files[0]));
     }
   }
+
   function clickClearLogo(event) {
     if (event && event.target) {
       setLogoImageSrc('');
@@ -118,12 +123,24 @@ export default function Home() {
                 onChange={(e) => setText(e.target.value)}
               />
             </Grid>
+            <Grid item xs={12} md={6} style={{ textAlign: 'center' }}>
+              <InputLabel>Dark Color (For Scanning)</InputLabel>
+              <CompactPicker 
+                color={ darkColor }
+                onChangeComplete={ (color) => setDarkColor(color.hex) }/>
+            </Grid>
+            <Grid item xs={12} md={6} style={{ textAlign: 'center' }}>
+              <InputLabel>Light Color (For Background)</InputLabel>
+              <CompactPicker 
+                color={ lightColor }
+                onChangeComplete={ (color) => setLightColor(color.hex) }/>
+            </Grid>
             <Grid item xs={12}>
               <label htmlFor={LOGO_IMAGE_INPUT_ID}>
                 <Input accept="image/*" id={LOGO_IMAGE_INPUT_ID} type="file" style={{ display: 'none' }} onChange={clickSetLogo} />
                 <Button 
                   fullWidth
-                  variant="contained" 
+                  variant="outlined" 
                   component="span"
                   startIcon={<ImageIcon />}>
                   (Optional) Upload Logo
@@ -136,7 +153,6 @@ export default function Home() {
                       style={{ paddingTop: '10px' }}/>
                     <Button 
                       fullWidth
-                      variant="outlined" 
                       color="error"
                       component="span"
                       onClick={clickClearLogo}>
@@ -153,7 +169,7 @@ export default function Home() {
             <Grid item xs={12}>
               <Button
                 fullWidth
-                variant="outlined"
+                variant="contained"
                 onClick={submit}
               >
                 Submit
